@@ -1,6 +1,5 @@
-use crate::TypeDefinitions::CmdRegs::{AGHIGH, BSPI_READ, CRCC, DESYNC, DGHIGH_LFRM, FALL_EDGE, GCAPTURE, GRESTORE, IPROG, LTIMER, MFW, NULL, RCAP, RCFG, RCRC, SHUTDOWN, START, SWITCH, WCFG};
-use crate::TypeDefinitions::ConfigRegs::{AXSS, BOOTSTS, BSPI, CBC, CMD, COR0, COR1, CRC, CTL0, CTL1, FAR, FDRI, FDRO, IDCODE, LOUT, MASK, MFWR, RBCRC_SW, STAT, TIMER, WBSTAR};
 use crate::TypeDefinitions::Opcodes::{Nop, Read, Reserved, Write};
+
 
 #[derive(Debug,Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]

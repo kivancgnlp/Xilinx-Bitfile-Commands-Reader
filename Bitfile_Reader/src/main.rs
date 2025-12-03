@@ -1,13 +1,12 @@
 mod TypeDefinitions;
 mod LookupHelpers;
 
+use std::any::Any;
 use std::fs::File;
 use std::io::{Read, Seek};
 
-use modular_bitfield::bitfield;
+use crate::TypeDefinitions::{ConfigRegs};
 use modular_bitfield::prelude::*;
-use crate::TypeDefinitions::{CmdRegs, ConfigRegs};
-
 
 #[bitfield (bytes=4)]
 #[derive(Debug)]
@@ -31,28 +30,34 @@ pub struct Type2Packet {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let mut bitfile = std::fs::File::open("Kaynak_data/bin_counter_bitfile.bin")?;
+    let file_path = match std::env::args().nth(1) {
+        Some(file_path) => file_path,
+        _ =>"Kaynak_data/bin_counter_bitfile.bin".to_string()
+    };
+
+    println!("Opening file: {}", file_path);
+
+    let mut bitfile = std::fs::File::open(file_path)?;
 
     seek_to_preamble(&mut bitfile)?;
 
     let lookup_utils = LookupHelpers::LookupData::new();
 
-    let mut dw_bytes = [0u8;4];
-
-
     //for i in 0..20{
     loop{
-        bitfile.read_exact(&mut dw_bytes)?;
 
-        let dw = u32::from_be_bytes(dw_bytes);
-        let packet_type : u8 = (dw >> 29) as u8;
+        let packet_read_result = read_packet(&mut bitfile);
 
-        match packet_type {
+        if packet_read_result.is_err() {
+            println!("End of file reached");
+            break;
+        }
+
+        let (pk1,pk2) = packet_read_result.unwrap();
+
+        match pk1.header_type() {
             1 => {
 
-                dw_bytes.reverse();
-                let pk1 = Type1Packet::from(dw_bytes);
-                //println!("{:?}", pk1);
 
                 let op_code = TypeDefinitions::Opcodes::from(pk1.opcode());
                 let config_register = lookup_utils.lookup_config_reg_from_id(pk1.reg_adr());
@@ -78,9 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             },
             2 => {
-                println!("packet_type 2");
-                dw_bytes.reverse();
-                let pk2 = Type2Packet::from(dw_bytes);
+
                 println!("{:?}", pk2);
 
                 for i in 0..pk2.word_count(){
@@ -105,6 +108,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+
+fn read_packet(file : &mut File) -> Result<(Type1Packet,Type2Packet), std::io::Error> {
+
+    let mut dw_bytes = [0u8;4];
+
+    file.read_exact(&mut dw_bytes)?;
+    dw_bytes.reverse();
+    let pk1 = Type1Packet::from(dw_bytes);
+    let pk2 = Type2Packet::from(dw_bytes);
+    Ok((pk1,pk2))
+
+}
 fn read_BE_DW( file: &mut File) -> Result<(u32), Box<dyn std::error::Error>> {
 
     let mut dw_bytes = [0u8;4];
