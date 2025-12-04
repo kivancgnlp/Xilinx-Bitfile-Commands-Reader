@@ -2,43 +2,23 @@ mod TypeDefinitions;
 mod LookupHelpers;
 mod ConfigurationRegisters;
 
-use std::fs::File;
-use std::io::{Read, Seek};
+use std::io::{BufReader, Read, Seek};
 
-use crate::TypeDefinitions::{ConfigRegs, Opcodes};
-use modular_bitfield::prelude::*;
-use crate::TypeDefinitions::Opcodes::Write;
-
-#[bitfield (bytes=4)]
-#[derive(Debug)]
-pub struct Type1Packet {
-    word_count: B11,
-    reserved_1: B2,
-    reg_adr: B5,
-    reserved_2: B9,
-    opcode : B2,
-    header_type:B3
-}
-
-#[bitfield (bytes=4)]
-#[derive(Debug)]
-pub struct Type2Packet {
-    word_count: B27,
-    opcode : B2,
-    header_type:B3
-}
+use crate::TypeDefinitions::{ConfigRegs, Opcodes, Type1Packet, Type2Packet};
 
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let file_path = match std::env::args().nth(1) {
         Some(file_path) => file_path,
-        _ =>"Kaynak_data/bin_counter_bitfile.bin".to_string()
+        _ =>"Kaynak_data/simple_counter.bit".to_string()
     };
 
     println!("Opening file: {}", file_path);
 
-    let mut bitfile = std::fs::File::open(file_path)?;
+    let input_file = std::fs::File::open(file_path)?;
+
+    let mut bitfile = BufReader::new(input_file);
 
     let seek_result = seek_to_preamble(&mut bitfile);
 
@@ -48,8 +28,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let lookup_utils = LookupHelpers::LookupData::new();
+    //println!("Lookup data : {}",lookup_utils);
 
-    //for i in 0..20{
+    
     loop{
 
         let packet_read_result = read_packet(&mut bitfile);
@@ -74,14 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // no operand
                     continue;
                 }
-                if pk1.word_count() > 1{ // word count 1 tane olmali
-                    println!("Consuming unexpected word count");
-                    for i in 0..pk1.word_count(){
-                        let dw = read_BE_DW(&mut bitfile)?;
-                        println!(" {:#x}",dw);
-                    }
-                    continue;
-                }
+    
                 let mut cmd_operand_bytes = [0u8;4];
 
                 bitfile.read_exact(&mut cmd_operand_bytes)?;
@@ -90,24 +64,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match config_register {
                     ConfigRegs::COR0 => {
                         let cor0 = ConfigurationRegisters::COR0::from(cmd_operand_bytes);
-                        println!("COR0 Write : {:?}", cor0);
+                        println!("COR0 Write : {:x}{:x}{:x}{:x} {:?}", cmd_operand_bytes[3], cmd_operand_bytes[2], cmd_operand_bytes[1], cmd_operand_bytes[0], cor0);
+                        println!();
                     }
 
                     ConfigRegs::CMD => {
-                        let cmd_reg = lookup_utils.lookup_cmd_reg_from_id(u32::from_be_bytes(cmd_operand_bytes) as u8);
+                        let cmd_reg = lookup_utils.lookup_cmd_reg_from_id(cmd_operand_bytes[0]);
                         println!("Command register {}. Command : {:?}",Opcodes::from(pk1.opcode()),cmd_reg);
                     }
 
                     _ => {
-                        println!("Config register {} to {:?} with value : {:#x}",Opcodes::from(pk1.opcode()), config_register, u32::from_be_bytes(cmd_operand_bytes));
+                        println!("Config register {} to {:?} with value : {:#x}",Opcodes::from(pk1.opcode()), config_register, u32::from_le_bytes(cmd_operand_bytes));
                     }
+                }
+
+                if pk1.word_count() > 1{ // word count 1 tane olmali
+                    println!("{} words follows", pk1.word_count() - 1);
+                    for i in 0..pk1.word_count() - 1{
+                        let dw = read_BE_DW(&mut bitfile)?;
+                        //println!(" {:#x}",dw);
+                    }
+                    continue;
                 }
 
 
             },
             2 => {
 
-                println!("{:?}", pk2);
+                println!("Bulk data {} ( {}  words ) ", Opcodes::from(pk2.opcode()),  pk2.word_count());
 
                 for i in 0..pk2.word_count(){
                     let dw = read_BE_DW(&mut bitfile)?;
@@ -132,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 
-fn read_packet(file : &mut File) -> Result<(Type1Packet,Type2Packet), std::io::Error> {
+fn read_packet(file : &mut impl Read) -> Result<(Type1Packet, Type2Packet), std::io::Error> {
 
     let mut dw_bytes = [0u8;4];
 
@@ -143,7 +127,7 @@ fn read_packet(file : &mut File) -> Result<(Type1Packet,Type2Packet), std::io::E
     Ok((pk1,pk2))
 
 }
-fn read_BE_DW( file: &mut File) -> Result<(u32), Box<dyn std::error::Error>> {
+fn read_BE_DW( file: &mut impl Read) -> Result<(u32), Box<dyn std::error::Error>> {
 
     let mut dw_bytes = [0u8;4];
 
@@ -152,9 +136,18 @@ fn read_BE_DW( file: &mut File) -> Result<(u32), Box<dyn std::error::Error>> {
     Ok(dw)
 
 }
-fn seek_to_preamble( file: &mut File) -> Result<(), Box<dyn std::error::Error>> {
+fn seek_to_preamble<R: Read + Seek>(file: &mut R)-> Result<(), Box<dyn std::error::Error>> {
 
     const PREAMBLE: [u8; 4] = [0xaa,0x99,0x55,0x66];
+
+    let mut seek_bytes: [u8; 1] = [0u8;1];
+
+    while seek_bytes[0]!=0xaa {
+        file.read_exact(&mut seek_bytes)?;
+    }
+
+    file.seek(std::io::SeekFrom::Current(-1))?;
+
 
     let mut dw_bytes = [0u8;4];
 

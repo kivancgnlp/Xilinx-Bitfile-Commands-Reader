@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use crate::TypeDefinitions::{CmdRegs, ConfigRegs};
 
 pub(crate) struct LookupData{
@@ -57,28 +58,23 @@ impl LookupData {
         
         ld.add_to_cmd_regs(CmdRegs::NULL);
         ld.add_to_cmd_regs(CmdRegs::WCFG);
+        ld.add_to_cmd_regs(CmdRegs::MFW);
         ld.add_to_cmd_regs(CmdRegs::DGHIGH_LFRM);
         ld.add_to_cmd_regs(CmdRegs::RCFG);
         ld.add_to_cmd_regs(CmdRegs::START);
-        ld.add_to_cmd_regs(CmdRegs::RCAP);
+        ld.add_to_cmd_regs(CmdRegs::URAM);
         ld.add_to_cmd_regs(CmdRegs::RCRC);
         ld.add_to_cmd_regs(CmdRegs::AGHIGH);
         ld.add_to_cmd_regs(CmdRegs::SWITCH);
         ld.add_to_cmd_regs(CmdRegs::GRESTORE);
         ld.add_to_cmd_regs(CmdRegs::SHUTDOWN);
-        ld.add_to_cmd_regs(CmdRegs::GCAPTURE);
         ld.add_to_cmd_regs(CmdRegs::DESYNC);
-        ld.add_to_cmd_regs(CmdRegs::Reserved);
-        ld.add_to_cmd_regs(CmdRegs::IPPROG);
+        ld.add_to_cmd_regs(CmdRegs::IPROG);
         ld.add_to_cmd_regs(CmdRegs::CRCC);
         ld.add_to_cmd_regs(CmdRegs::LTIMER);
         ld.add_to_cmd_regs(CmdRegs::BSPI_READ);
         ld.add_to_cmd_regs(CmdRegs::FALL_EDGE);
-        
-        
-        
-        
-        
+
         
         ld
     }
@@ -89,5 +85,31 @@ impl LookupData {
 
     pub(crate) fn lookup_cmd_reg_from_id(&self, id :u8) -> CmdRegs{
         self.cmd_regs_reverse_lookup[&id]
+    }
+}
+
+
+impl Display for LookupData{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+
+        let mut keys = Vec::<u8>::new();
+
+        self.config_regs_reverse_lookup.keys().for_each(|k| { keys.push(*k);});
+        keys.sort();
+
+        for key in &keys {
+            writeln!(f, "Config reg ID {:#x} = {:?}:", key, self.config_regs_reverse_lookup[key])?;
+        }
+
+        keys.clear();
+        self.cmd_regs_reverse_lookup.keys().for_each(|k| { keys.push(*k);});
+        keys.sort();
+
+        for key in keys{
+            writeln!(f, "Command reg ID {:#x} = {:?}:", key, self.cmd_regs_reverse_lookup[&key])?;
+        }
+
+
+        Ok(())
     }
 }

@@ -1,4 +1,6 @@
 use std::fmt::{Display, Formatter};
+use modular_bitfield::bitfield;
+use modular_bitfield::prelude::{B11, B2, B27, B3, B5, B9};
 use crate::TypeDefinitions::Opcodes::{Nop, Read, Reserved, Write};
 
 
@@ -73,20 +75,38 @@ pub(crate) enum CmdRegs {
     DGHIGH_LFRM,
     RCFG,
     START,
-    RCAP,
+    URAM,
     RCRC,
     AGHIGH,
     SWITCH,
     GRESTORE,
     SHUTDOWN,
-    GCAPTURE,
-    DESYNC,
-    Reserved,
-    IPROG,
+    DESYNC = 13,
+    IPROG = 15,
     CRCC,
     LTIMER,
     BSPI_READ,
     FALL_EDGE,
-    IPPROG,
+    
 }
 
+
+
+#[bitfield (bytes=4)]
+#[derive(Debug)]
+pub struct Type1Packet {
+    pub word_count: B11,
+    reserved_1: B2,
+    pub reg_adr: B5,
+    reserved_2: B9,
+    pub opcode : B2,
+    pub header_type:B3
+}
+
+#[bitfield (bytes=4)]
+#[derive(Debug)]
+pub struct Type2Packet {
+    pub word_count: B27,
+    pub opcode : B2,
+    pub header_type:B3
+}
