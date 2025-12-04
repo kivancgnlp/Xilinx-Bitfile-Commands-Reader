@@ -40,7 +40,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut bitfile = std::fs::File::open(file_path)?;
 
-    seek_to_preamble(&mut bitfile)?;
+    let seek_result = seek_to_preamble(&mut bitfile);
+
+    if seek_result.is_err() {
+        eprintln!("Unable find preamble");
+        return Err(seek_result.err().unwrap());
+    }
 
     let lookup_utils = LookupHelpers::LookupData::new();
 
