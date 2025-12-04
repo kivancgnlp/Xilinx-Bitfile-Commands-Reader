@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use crate::TypeDefinitions::Opcodes::{Nop, Read, Reserved, Write};
 
 
@@ -35,6 +36,20 @@ pub(crate) enum Opcodes {
     Read = 1,
     Write = 2,
     Reserved = 3,
+}
+
+
+impl Display for Opcodes{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        
+        let str_rep = match self {
+            Nop => "Nop",
+            Read => "Read",
+            Write => "Write",
+            Reserved => "Reserved",
+        };
+        write!(f, "{}", str_rep)
+    }
 }
 
 impl From<u8> for Opcodes{

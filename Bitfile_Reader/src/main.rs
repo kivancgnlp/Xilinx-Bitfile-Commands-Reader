@@ -1,12 +1,13 @@
 mod TypeDefinitions;
 mod LookupHelpers;
+mod ConfigurationRegisters;
 
-use std::any::Any;
 use std::fs::File;
 use std::io::{Read, Seek};
 
-use crate::TypeDefinitions::{ConfigRegs};
+use crate::TypeDefinitions::{ConfigRegs, Opcodes};
 use modular_bitfield::prelude::*;
+use crate::TypeDefinitions::Opcodes::Write;
 
 #[bitfield (bytes=4)]
 #[derive(Debug)]
@@ -62,21 +63,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let op_code = TypeDefinitions::Opcodes::from(pk1.opcode());
                 let config_register = lookup_utils.lookup_config_reg_from_id(pk1.reg_adr());
 
-                print!("OP code : {:?}, config_register : {:?}",op_code,config_register);
+                //println!("OP code : {:?}, config_register : {:?}",op_code,config_register);
 
-                if config_register == ConfigRegs::CMD{
-                    let dw = read_BE_DW(&mut bitfile)?;
-                    let cmd_reg = lookup_utils.lookup_cmd_reg_from_id(dw as u8);
-                    println!(" Command : {:?}",cmd_reg);
-                }else{
-
+                if pk1.word_count() == 0 {
+                    // no operand
+                    continue;
+                }
+                if pk1.word_count() > 1{ // word count 1 tane olmali
+                    println!("Consuming unexpected word count");
                     for i in 0..pk1.word_count(){
                         let dw = read_BE_DW(&mut bitfile)?;
                         println!(" {:#x}",dw);
                     }
+                    continue;
+                }
+                let mut cmd_operand_bytes = [0u8;4];
 
-                    if pk1.word_count() == 0{
-                        println!();
+                bitfile.read_exact(&mut cmd_operand_bytes)?;
+                cmd_operand_bytes.reverse();
+
+                match config_register {
+                    ConfigRegs::COR0 => {
+                        let cor0 = ConfigurationRegisters::COR0::from(cmd_operand_bytes);
+                        println!("COR0 Write : {:?}", cor0);
+                    }
+
+                    ConfigRegs::CMD => {
+                        let cmd_reg = lookup_utils.lookup_cmd_reg_from_id(u32::from_be_bytes(cmd_operand_bytes) as u8);
+                        println!("Command register {}. Command : {:?}",Opcodes::from(pk1.opcode()),cmd_reg);
+                    }
+
+                    _ => {
+                        println!("Config register {} to {:?} with value : {:#x}",Opcodes::from(pk1.opcode()), config_register, u32::from_be_bytes(cmd_operand_bytes));
                     }
                 }
 
