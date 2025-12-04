@@ -1,6 +1,7 @@
 mod TypeDefinitions;
 mod LookupHelpers;
 mod ConfigurationRegisters;
+mod IDCODE_Decoder;
 
 use std::io::{BufReader, Read, Seek};
 
