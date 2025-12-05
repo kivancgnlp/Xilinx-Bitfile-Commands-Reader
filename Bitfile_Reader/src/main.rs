@@ -19,7 +19,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Opening file: {}", file_path);
 
-    let input_file = std::fs::File::open(&file_path)?;
+    let file_open_result = std::fs::File::open(&file_path);
+
+    if file_open_result.is_err() {
+        println!("Unable to open file: {}", file_path);
+        return Ok(());
+    }
+    let input_file = file_open_result.unwrap();
 
     let mut bitfile = BufReader::new(input_file);
     
@@ -61,6 +67,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 if pk1.word_count() == 0 {
                     // no operand
+
+                    let opc = Opcodes::from(pk1.opcode());
+
+                    if opc != Opcodes::Nop{
+                        println!("Config register {} to {:?} without operand", opc, config_register);
+                    }
+
                     continue;
                 }
     
@@ -101,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         };
 
-                        println!("ID Code Config register {}. Bit file is prepared for the following device : {}",Opcodes::from(pk1.opcode()), device_guess);
+                        println!("ID Code Config register {}. This bitstream is prepared for the following device : {}",Opcodes::from(pk1.opcode()), device_guess);
 
                     }
 

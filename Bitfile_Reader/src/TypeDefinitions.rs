@@ -31,7 +31,7 @@ pub(crate) enum ConfigRegs {
     BSPI = 0x1F,
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq,Eq)]
 #[repr(u8)]
 pub(crate) enum Opcodes {
     Nop = 0,
