@@ -3,6 +3,8 @@ mod LookupHelpers;
 mod ConfigurationRegisters;
 mod IDCODE_Decoder;
 
+mod Bit_Header_Decoder;
+
 use std::io::{BufReader, Read, Seek};
 
 use crate::TypeDefinitions::{ConfigRegs, Opcodes, Type1Packet, Type2Packet};
@@ -17,9 +19,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Opening file: {}", file_path);
 
-    let input_file = std::fs::File::open(file_path)?;
+    let input_file = std::fs::File::open(&file_path)?;
 
     let mut bitfile = BufReader::new(input_file);
+    
+    if file_path.ends_with(".bit"){
+        Bit_Header_Decoder::dump_bit_header(&mut bitfile);
+    }
 
     let seek_result = seek_to_preamble(&mut bitfile);
 
