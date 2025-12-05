@@ -12,8 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let file_path = match std::env::args().nth(1) {
         Some(file_path) => file_path,
-        //_ =>"Kaynak_data/simple_counter.bit".to_string()
-        _ =>"Kaynak_data/bin_counter_bitfile.bin".to_string()
+        _ =>"Kaynak_data/simple_counter_quadspi_externalclkdiv2.bit".to_string()
     };
 
     println!("Opening file: {}", file_path);
