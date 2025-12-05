@@ -1,9 +1,6 @@
 # Xilinx Bitfile Readback Utility
 
-This application is designed for displaying some properties of the bitfile. The user can extract information like wheather quad spi enabled or ECLK in use or WBSTAR value is correct. It is for the cases when you are unsure about these parameters and you don't want to wait for another synthesis/implementation.
-
-
-# Compiling
+This application is designed to display various properties of the bitfile. Users can extract information about whether Quad SPI is enabled, if ECLK is in use, and whether the WBSTAR value is correct. It is particularly useful when you are uncertain about these parameters and do not want to wait for another synthesis or implementation.
 
 # Build & Run instructions : 
 
