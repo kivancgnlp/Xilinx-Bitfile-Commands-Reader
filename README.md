@@ -46,3 +46,7 @@ Config register Write to CRC with value : 0x7db41709
 Command register Write. Command : DESYNC
 
 ```
+
+# Notes about IDCode decoding 
+
+The application currently uses a small dataset for generating IDCODE to device description. You can add lines to the "Kaynak_data/Known_ID_Codes.txt" file if you need to verify bitstream's IDCODE for your device.
