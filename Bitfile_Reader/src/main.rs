@@ -70,6 +70,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("COR0 Write : {:x}{:x}{:x}{:x} {:?}", cmd_operand_bytes[3], cmd_operand_bytes[2], cmd_operand_bytes[1], cmd_operand_bytes[0], cor0);
                     }
 
+                    ConfigRegs::BSPI => {
+                        let parsed_BSPI = ConfigurationRegisters::BPI_SPI_Configuration::from_bytes(cmd_operand_bytes);
+
+                        let bus_width = match parsed_BSPI.SPI_BUSWIDTH() {
+                            0 => 1,
+                            1 => 2,
+                            2 => 4,
+                            _ => 0
+                        };
+                        println!("BPI_SPI_Configuration : SPI_READ_OPCODE : {:#x}, bus_width : {}, 32-bit adr : {}",parsed_BSPI.SPI_READ_OPCODE(), bus_width, parsed_BSPI.SPI_BUSWIDTH() == 1);
+                    }
+
                     ConfigRegs::CMD => {
                         let cmd_reg = lookup_utils.lookup_cmd_reg_from_id(cmd_operand_bytes[0]);
                         println!("Command register {}. Command : {:?}",Opcodes::from(pk1.opcode()),cmd_reg);

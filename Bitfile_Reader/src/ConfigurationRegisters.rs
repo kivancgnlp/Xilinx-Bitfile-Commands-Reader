@@ -21,9 +21,9 @@ pub struct COR0 {
 #[bitfield (bytes=4)]
 #[derive(Debug)]
 pub struct BPI_SPI_Configuration {
-    SPI_READ_OPCODE:B8,
-    SPI_BUSWIDTH:B2,
-    SPI_32BIT_ADDR:B1,
+    pub SPI_READ_OPCODE:B8,
+    pub SPI_BUSWIDTH:B2,
+    pub SPI_32BIT_ADDR:B1,
     RESERVED_1:B1,
     BPI_SYNC_RCR:B15,
     BPI_SYNC_MODE:B1,
