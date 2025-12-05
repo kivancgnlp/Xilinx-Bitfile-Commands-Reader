@@ -1,3 +1,7 @@
-0x362D XC7A35T
-0X3727 Zynq-7000(XC7Z010)
-0x04e4 UltraScale(XCKU025)
+# This is a minimal dataset for the device_id to device name mapping
+# Format is upper 16 bits of the idcode and device description seperated by white space after hexadecimal number.
+# Hexadecimal number should start with "0x" and there must be a white space between them and their description
+
+0x362D Artix-7 (XC7A35T)
+0X3727 Zynq-7000 (XC7Z010)
+0x04e4 UltraScale (XCKU025)

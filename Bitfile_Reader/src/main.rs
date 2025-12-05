@@ -12,7 +12,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let file_path = match std::env::args().nth(1) {
         Some(file_path) => file_path,
-        _ =>"Kaynak_data/simple_counter.bit".to_string()
+        //_ =>"Kaynak_data/simple_counter.bit".to_string()
+        _ =>"Kaynak_data/bin_counter_bitfile.bin".to_string()
     };
 
     println!("Opening file: {}", file_path);
@@ -30,6 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let lookup_utils = LookupHelpers::LookupData::new();
     //println!("Lookup data : {}",lookup_utils);
+    let id_code_decoder = IDCODE_Decoder::DecodeData::new();
 
     
     loop{
@@ -66,12 +68,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ConfigRegs::COR0 => {
                         let cor0 = ConfigurationRegisters::COR0::from(cmd_operand_bytes);
                         println!("COR0 Write : {:x}{:x}{:x}{:x} {:?}", cmd_operand_bytes[3], cmd_operand_bytes[2], cmd_operand_bytes[1], cmd_operand_bytes[0], cor0);
-                        println!();
                     }
 
                     ConfigRegs::CMD => {
                         let cmd_reg = lookup_utils.lookup_cmd_reg_from_id(cmd_operand_bytes[0]);
                         println!("Command register {}. Command : {:?}",Opcodes::from(pk1.opcode()),cmd_reg);
+                    }
+
+                    ConfigRegs::IDCODE => {
+                        let id_code = u32::from_le_bytes(cmd_operand_bytes);
+
+                        let device_guess = match id_code_decoder.try_to_guess_device_id(id_code){
+                            Some(device_guess) => device_guess,
+                            _ => format!(" {:#x} Not present in Known_ID_Codes.txt", id_code >> 16)
+
+                        };
+
+                        println!("ID Code Config register {}. Bit file is prepared for the following device : {}",Opcodes::from(pk1.opcode()), device_guess);
+
                     }
 
                     _ => {
@@ -92,7 +106,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
             2 => {
 
-                println!("Bulk data {} ( {}  words ) ", Opcodes::from(pk2.opcode()),  pk2.word_count());
+                println!("Bulk data {} ( {}  Double Words ) ( {} bytes ) ", Opcodes::from(pk2.opcode()), pk2.word_count(), pk2.word_count() * 4);
 
                 for i in 0..pk2.word_count(){
                     let dw = read_BE_DW(&mut bitfile)?;
