@@ -26,15 +26,11 @@ impl DecodeData {
                     if l.starts_with("#") || l.is_empty(){ // Skip comments and empty lines
                         continue;
                     }
-                    if let Some(space_place) = l.find(char::is_whitespace) {
-                        if let Some(x_place) = l.find("0x" ) {
-                            if let Ok(key) = u16::from_str_radix(&l[x_place+2..space_place],16){
-                                dec_map.insert(key, l[space_place+1..].to_string());
-                            }
 
-                        }
-
+                    if let Some((key,value)) = Self::parse_line_method_1(l.as_str()){
+                        dec_map.insert(key, value.to_string());
                     }
+
                 }
             }
 
@@ -44,6 +40,22 @@ impl DecodeData {
 
         dec_map
 
+    }
+
+    fn parse_line_method_1(l: &str) -> Option<(u16, &str)> {
+        if let Some(space_place) = l.find(char::is_whitespace) {
+            if let Some(x_place) = l.find("0x") {
+                if let Some(hex_val_str) = l.get(x_place + 2..space_place) {
+                    if let Ok(key) = u16::from_str_radix(hex_val_str, 16) {
+                        if let Some(desc_str) = l.get(space_place + 1..) {
+                            return Some((key, desc_str))
+                        }
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     pub fn try_to_guess_device_id(&self, code_value:u32) -> Option<String> {
