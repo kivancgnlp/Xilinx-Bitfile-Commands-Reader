@@ -4,6 +4,8 @@ This application is designed to display various properties of the bitfile. Users
 
 # Build & Run instructions : 
 
+You can also find browser based app in this link : https://kivancgnlp.github.io/WebApps/Xilinx_Bitfile_Information_Reader/index.html
+
 1. Install Rust: https://rustup.rs
 2. Clone or unzip project
 3. cd project
