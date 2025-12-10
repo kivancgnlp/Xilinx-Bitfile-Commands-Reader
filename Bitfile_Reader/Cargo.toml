@@ -1,5 +1,5 @@
 [package]
-name = "Bitfile_reader_prototype_1"
+name = "Bitfile_Reader"
 version = "0.1.0"
 edition = "2024"
 
