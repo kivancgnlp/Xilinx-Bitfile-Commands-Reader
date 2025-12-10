@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{BufRead, BufReader};
 
-pub(crate) struct DecodeData{
+pub struct DecodeData{
     decoding_map: HashMap<u16, String>,
 }
 
@@ -42,7 +42,7 @@ impl DecodeData {
 
     }
 
-    fn parse_line_method_1(l: &str) -> Option<(u16, &str)> {
+    pub(crate) fn parse_line_method_1(l: &str) -> Option<(u16, &str)> {
         if let Some(space_place) = l.find(char::is_whitespace) {
             if let Some(x_place) = l.find("0x") {
                 if let Some(hex_val_str) = l.get(x_place + 2..space_place) {
