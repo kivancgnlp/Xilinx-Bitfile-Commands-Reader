@@ -2,12 +2,12 @@ mod TypeDefinitions;
 mod LookupHelpers;
 mod ConfigurationRegisters;
 mod IDCODE_Decoder;
-
 mod Bit_Header_Decoder;
+mod File_Parse_Helpers;
 
 use std::io::{BufReader, Read, Seek};
 
-use crate::TypeDefinitions::{ConfigRegs, Opcodes, Type1Packet, Type2Packet};
+use TypeDefinitions::{ConfigRegs, Opcodes};
 
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Bit_Header_Decoder::dump_bit_header(&mut bitfile);
     }
 
-    let seek_result = seek_to_preamble(&mut bitfile);
+    let seek_result = File_Parse_Helpers::seek_to_preamble(&mut bitfile);
 
     if seek_result.is_err() {
         eprintln!("Unable find preamble");
@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     loop{
 
-        let packet_read_result = read_packet(&mut bitfile);
+        let packet_read_result = File_Parse_Helpers::read_packet(&mut bitfile);
 
         if packet_read_result.is_err() {
             println!("End of file reached");
@@ -126,7 +126,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if pk1.word_count() > 1{ // word count 1 tane olmali
                     println!("{} words follows", pk1.word_count() - 1);
                     for i in 0..pk1.word_count() - 1{
-                        let dw = read_BE_DW(&mut bitfile)?;
+                        let dw = File_Parse_Helpers::read_BE_DW(&mut bitfile)?;
                         //println!(" {:#x}",dw);
                     }
                     continue;
@@ -139,7 +139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Bulk data {} ( {}  Double Words ) ( {} bytes ) ", Opcodes::from(pk2.opcode()), pk2.word_count(), pk2.word_count() * 4);
 
                 for i in 0..pk2.word_count(){
-                    let dw = read_BE_DW(&mut bitfile)?;
+                    let dw = File_Parse_Helpers::read_BE_DW(&mut bitfile)?;
                     //println!(" {:#x}",dw);
 
                 }
@@ -160,49 +160,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-
-fn read_packet(file : &mut impl Read) -> Result<(Type1Packet, Type2Packet), std::io::Error> {
-
-    let mut dw_bytes = [0u8;4];
-
-    file.read_exact(&mut dw_bytes)?;
-    dw_bytes.reverse();
-    let pk1 = Type1Packet::from(dw_bytes);
-    let pk2 = Type2Packet::from(dw_bytes);
-    Ok((pk1,pk2))
-
-}
-fn read_BE_DW( file: &mut impl Read) -> Result<(u32), Box<dyn std::error::Error>> {
-
-    let mut dw_bytes = [0u8;4];
-
-    file.read_exact(&mut dw_bytes)?;
-    let dw = u32::from_be_bytes(dw_bytes);
-    Ok(dw)
-
-}
-fn seek_to_preamble<R: Read + Seek>(file: &mut R)-> Result<(), Box<dyn std::error::Error>> {
-
-    const PREAMBLE: [u8; 4] = [0xaa,0x99,0x55,0x66];
-
-    let mut seek_bytes: [u8; 1] = [0u8;1];
-
-    while seek_bytes[0]!=0xaa {
-        file.read_exact(&mut seek_bytes)?;
-    }
-
-    file.seek(std::io::SeekFrom::Current(-1))?;
-
-
-    let mut dw_bytes = [0u8;4];
-
-    file.read_exact(&mut dw_bytes)?;
-
-    while dw_bytes != PREAMBLE {
-        file.read_exact(&mut dw_bytes)?;
-    }
-
-    file.seek(std::io::SeekFrom::Current((PREAMBLE.len() as i64) - 4))?;
-
-    Ok(())
-}
