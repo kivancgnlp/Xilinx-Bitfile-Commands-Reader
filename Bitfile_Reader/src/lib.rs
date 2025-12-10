@@ -2,7 +2,7 @@
 
 
 
-mod IDCODE_Decoder;
+pub mod IDCODE_Decoder;
 mod File_Parse_Helpers;
 mod TypeDefinitions;
 
@@ -43,7 +43,7 @@ mod tests {
     fn seek_to_preamle_test(){
         use crate::File_Parse_Helpers;
 
-        let mut byte_buffer = vec![0xFF_u8,0xFF,0xAA,0x99,0x55,0x66,0x20];
+        let byte_buffer = vec![0xFF_u8,0xFF,0xAA,0x99,0x55,0x66,0x20];
         let mut cursor= Cursor::new(byte_buffer);
 
         let result = File_Parse_Helpers::seek_to_preamble(&mut cursor);
