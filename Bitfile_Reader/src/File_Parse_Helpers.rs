@@ -1,10 +1,10 @@
-use std::io::{Error, ErrorKind, Read, Seek};
+use std::io::{Error, ErrorKind, Read, Result};
 
 
 //use crate::TypeDefinitions::Type1Packet;
 use crate::TypeDefinitions::{Type1Packet, Type2Packet};
 
-pub(crate) fn read_packet(file : &mut impl Read) -> Result<(Type1Packet, Type2Packet), std::io::Error> {
+pub(crate) fn read_packet(file : &mut impl Read) -> Result<(Type1Packet, Type2Packet)> {
 
     let mut dw_bytes = [0u8;4];
 
@@ -15,7 +15,7 @@ pub(crate) fn read_packet(file : &mut impl Read) -> Result<(Type1Packet, Type2Pa
     Ok((pk1,pk2))
 
 }
-pub(crate) fn read_BE_DW(file: &mut impl Read) -> Result<(u32), Box<dyn std::error::Error>> {
+pub(crate) fn read_BE_DW(file: &mut impl Read) -> Result<u32> {
 
     let mut dw_bytes = [0u8;4];
 
@@ -26,7 +26,7 @@ pub(crate) fn read_BE_DW(file: &mut impl Read) -> Result<(u32), Box<dyn std::err
 }
 
 /// Basic implementation of seeking the preamble [0xaa,0x99,0x55,0x66]
-pub(crate) fn seek_to_preamble<R: Read>(file: &mut R) -> Result<(), Box<dyn std::error::Error>> {
+pub(crate) fn seek_to_preamble<R: Read>(file: &mut R) -> Result<()> {
 
     //
     const PREAMBLE: [u8; 4] = [0xaa,0x99,0x55,0x66];
@@ -42,7 +42,7 @@ pub(crate) fn seek_to_preamble<R: Read>(file: &mut R) -> Result<(), Box<dyn std:
     file.read_exact(&mut dw_bytes)?;
 
     if PREAMBLE[1..] != dw_bytes {
-        return Err(Box::new(Error::new(ErrorKind::InvalidData, "Invalid preamble.")));
+        return Err(Error::new(ErrorKind::InvalidData, "Invalid preamble."));
     }
 
 

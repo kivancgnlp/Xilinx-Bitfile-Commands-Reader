@@ -1,8 +1,9 @@
 use std::collections::HashMap;
-use std::io::Read;
+use std::io::{Error, ErrorKind, Read};
+use std::io::Result;
 
 
-fn parse_TLV(mut file_input_stream: impl Read) -> Result<(String,String), Box<dyn std::error::Error>>{
+fn parse_TLV(mut file_input_stream: impl Read) -> Result<(String,String)>{
     let mut tag = [0_u8];
     let mut len = [0_u8,0];
     let mut byte = [0_u8];
@@ -22,7 +23,9 @@ fn parse_TLV(mut file_input_stream: impl Read) -> Result<(String,String), Box<dy
         value_str_buffer.push(byte[0]);
     }
 
-    let val_str = String::from_utf8(value_str_buffer) ?;
+    let val_str = String::from_utf8(value_str_buffer).map_err(|err|{
+        Error::new(ErrorKind::Other, "UTF-8 conversion error.")
+    })?;
 
     let tag_str = String::from(tag[0] as char);
 

@@ -5,12 +5,12 @@ mod IDCODE_Decoder;
 mod Bit_Header_Decoder;
 mod File_Parse_Helpers;
 
-use std::io::{BufReader, Read, Seek};
-
+use std::io::{BufReader, Read, Seek, Result, Error};
+use std::process;
 use TypeDefinitions::{ConfigRegs, Opcodes};
 
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
 
     let file_path = match std::env::args().nth(1) {
         Some(file_path) => file_path,
@@ -19,13 +19,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Opening file: {}", file_path);
 
-    let file_open_result = std::fs::File::open(&file_path);
-
-    if file_open_result.is_err() {
-        println!("Unable to open file: {}", file_path);
-        return Ok(());
-    }
-    let input_file = file_open_result.unwrap();
+    let input_file = std::fs::File::open(&file_path).inspect_err(|e| {
+        eprintln!("Unable to open file: {} , {}", file_path,e);
+    })?;
+     
 
     let mut bitfile = BufReader::new(input_file);
     
@@ -33,12 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Bit_Header_Decoder::dump_bit_header(&mut bitfile);
     }
 
-    let seek_result = File_Parse_Helpers::seek_to_preamble(&mut bitfile);
-
-    if seek_result.is_err() {
-        eprintln!("Unable find preamble");
-        return Err(seek_result.err().unwrap());
-    }
+    File_Parse_Helpers::seek_to_preamble(&mut bitfile).inspect_err(|e| {
+        println!("Unable to find preamble: {}", e);
+    })?;
+    
 
     let lookup_utils = LookupHelpers::LookupData::new();
     //println!("Lookup data : {}",lookup_utils);
@@ -146,12 +141,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             _ => {
                 eprintln!("Unknown packet type");
-                //panic!("Unknown packet type");
-                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Unknown packet type")));
+                return Err(Error::new(std::io::ErrorKind::Other, "Unknown packet type"));
             }
         }
-
-
 
     }
 
